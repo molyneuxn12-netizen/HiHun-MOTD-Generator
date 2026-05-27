@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hideaway Hunters — Fleet MOTD Generator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;800&display=swap');
+
+    :root {
+      --bg:        #07090e;
+      --bg2:       #0d1117;
+      --bg3:       #111820;
+      --border:    #1e2d3d;
+      --border2:   #2a3f54;
+      --gold:      #c8a94a;
+      --gold-dim:  #7a6228;
+      --cyan:      #4fc3f7;
+      --cyan-dim:  #1e4f66;
+      --green:     #6ec97a;
+      --red:       #e07070;
+      --orange:    #e0a050;
+      --white:     #e8edf2;
+      --muted:     #4a6070;
+      --text:      #8faabb;
+      --text2:     #b8cdd8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text2);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* Starfield background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 42% 8%,  rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 70% 35%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 12%, rgba(255,255,255,0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5%  60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 75%, rgba(255,255,255,0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 92% 80%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 28% 90%, rgba(255,255,255,0.3) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 30px rgba(200,169,74,0.4);
+    }
+    .logo span { color: var(--cyan); }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 0.4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.25rem;
+      position: relative;
+    }
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan-dim), transparent);
+      border-radius: 4px 4px 0 0;
+    }
+
+    .panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    label {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+      margin-top: 12px;
+    }
+    label:first-of-type { margin-top: 0; }
+
+    input[type=text], textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.82rem;
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type=text]:focus, textarea:focus {
+      border-color: var(--cyan-dim);
+      box-shadow: 0 0 0 2px rgba(79,195,247,0.06);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .range-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .range-item label { margin-top: 0; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    input[type=checkbox] {
+      appearance: none;
+      width: 15px; height: 15px;
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      background: var(--bg);
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    input[type=checkbox]:checked {
+      background: var(--cyan-dim);
+      border-color: var(--cyan);
+    }
+    input[type=checkbox]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--cyan);
+      font-size: 10px;
+      line-height: 1;
+    }
+    .toggle-label {
+      font-size: 0.78rem;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 14px 0;
+    }
+
+    .ranges-heading {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 8px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    /* Preview */
+    .preview-box {
+      background: #060810;
+      border: 1px solid #253545;
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12.5px;
+      line-height: 2;
+      color: #a8bfcc;
+      min-height: 260px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+    }
+    .preview-box::before {
+      content: 'MOTD PREVIEW';
+      position: absolute;
+      top: 8px; right: 12px;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .ev-header { color: #ffd966; font-weight: bold; font-size: 13.5px; }
+    .ev-gold   { color: #c8a94a; }
+    .ev-cyan   { color: #4fc3f7; }
+    .ev-green  { color: #6ec97a; }
+    .ev-red    { color: #e07070; font-weight: bold; }
+    .ev-orange { color: #e0a050; }
+    .ev-white  { color: #ffffff; font-weight: bold; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      color: var(--cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 9px 18px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    button:hover {
+      background: var(--cyan-dim);
+      border-color: var(--cyan);
+      color: #fff;
+    }
+    button.primary {
+      flex: 1;
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+    button.primary:hover {
+      background: rgba(200,169,74,0.15);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .copy-confirm {
+      font-size: 0.7rem;
+      color: var(--green);
+      text-align: center;
+      margin-top: 6px;
+      min-height: 16px;
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 680px) {
+      .grid { grid-template-columns: 1fr; }
+      .full { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <div class="logo">HIDEAWAY HUNTERS <span>//</span> FLEET MOTD GENERATOR</div>
+      <div class="subtitle">Standing Fleet — Channel of the Day Builder</div>
+    </header>
+
+    <div class="grid">
+
+      <!-- Fleet Identity -->
+      <div class="panel">
+        <div class="panel-title">Fleet Identity</div>
+        <label>Fleet name</label>
+        <input type="text" id="fleet-name" value="Hideaway Hunters Standing Fleet" />
+        <label>Orca / Porpoise pilot</label>
+        <input type="text" id="orca-pilot" placeholder="Character name(s)" />
+        <hr class="divider" />
+        <div class="ranges-heading">Ranges (km)</div>
+        <div class="range-grid">
+          <div class="range-item">
+            <label>Mining boost</label>
+            <input type="text" id="range-mining" placeholder="e.g. 45" />
+          </div>
+          <div class="range-item">
+            <label>Shield boost</label>
+            <input type="text" id="range-shield" placeholder="e.g. 45" />
+          </div>
+          <div class="range-item">
+            <label>Compressor</label>
+            <input type="text" id="range-compress" placeholder="e.g. 15" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Activity -->
+      <div class="panel">
+        <div class="panel-title">Current Activity</div>
+        <label>Homefronts</label>
+        <input type="text" id="homefront" placeholder="None active" />
+        <label>Moon mining</label>
+        <input type="text" id="moonmine" placeholder="None active" />
+        <label>Belt mining</label>
+        <input type="text" id="beltmine" placeholder="None active" />
+      </div>
+
+      <!-- Fleet Rules -->
+      <div class="panel">
+        <div class="panel-title">Fleet Rules</div>
+        <label>Rules (one per line)</label>
+        <textarea id="rules" rows="4">Please move yourself to the proper squad/wing in the Fleet Window
+Help others when they need it, encourage them to group up
+Have fun!</textarea>
+      </div>
+
+      <!-- Moon Etiquette -->
+      <div class="panel">
+        <div class="panel-title">Moon Mining Etiquette</div>
+        <label>Moon systems</label>
+        <input type="text" id="moon-systems" value="Vivanier/Brellystier" />
+        <div class="toggle-row" style="margin-top:12px;">
+          <input type="checkbox" id="etiq-crystals" checked />
+          <label class="toggle-label" for="etiq-crystals">Type A crystals / no residue on glistening</label>
+        </div>
+        <div class="toggle-row">
+          <input type="checkbox" id="etiq-onerock" checked />
+          <label class="toggle-label" for="etiq-onerock">One rock per ship reminder</label>
+        </div>
+        <div class="toggle-row">
+          <input type="checkbox" id="etiq-buyback" checked />
+          <label class="toggle-label" for="etiq-buyback">Non-corp buyback requirement</label>
+        </div>
+        <label>Corp tags (for buyback rule)</label>
+        <input type="text" id="corp-tags" value="HIHUN/WHBOO" />
+        <label>Buyback contract to</label>
+        <input type="text" id="buyback-to" value="Hideaway Holding Services" />
+      </div>
+
+      <!-- Preview -->
+      <div class="panel full">
+        <div class="panel-title">Live Preview</div>
+        <div class="preview-box" id="preview">...</div>
+        <div class="btn-row">
+          <button class="primary" onclick="copyMotd()">⬡ Copy MOTD to Clipboard</button>
+          <button onclick="resetAll()">↺ Reset</button>
+        </div>
+        <div class="copy-confirm" id="copy-confirm"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const watchIds = [
+      'fleet-name','orca-pilot','range-mining','range-shield','range-compress',
+      'homefront','moonmine','beltmine','rules','moon-systems',
+      'etiq-crystals','etiq-onerock','etiq-buyback','corp-tags','buyback-to'
+    ];
+
+    watchIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', render);
+    });
+
+    function val(id) { return (document.getElementById(id).value || '').trim(); }
+    function chk(id) { return document.getElementById(id).checked; }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    const hd = t => `<span class="ev-header">${esc(t)}</span>`;
+    const g  = t => `<span class="ev-gold">${esc(t)}</span>`;
+    const c  = t => `<span class="ev-cyan">${esc(t)}</span>`;
+    const gr = t => `<span class="ev-green">${esc(t)}</span>`;
+    const r  = t => `<span class="ev-red">${esc(t)}</span>`;
+    const o  = t => `<span class="ev-orange">${esc(t)}</span>`;
+    const w  = t => `<span class="ev-white">${esc(t)}</span>`;
+
+    function activity(text) {
+      return text ? gr(text) : r('None active');
+    }
+
+    function render() {
+      const fleetName     = val('fleet-name') || 'Hideaway Hunters Standing Fleet';
+      const orca          = val('orca-pilot');
+      const rangeMining   = val('range-mining');
+      const rangeShield   = val('range-shield');
+      const rangeCompress = val('range-compress');
+      const homefront     = val('homefront');
+      const moonmine      = val('moonmine');
+      const beltmine      = val('beltmine');
+      const rulesRaw      = val('rules');
+      const moonSystems   = val('moon-systems') || 'Vivanier/Brellystier';
+      const etiqCrystals  = chk('etiq-crystals');
+      const etiqOneRock   = chk('etiq-onerock');
+      const etiqBuyback   = chk('etiq-buyback');
+      const corpTags      = val('corp-tags') || 'HIHUN/WHBOO';
+      const buybackTo     = val('buyback-to') || 'Hideaway Holding Services';
+
+      const rules = rulesRaw.split('\n').map(s => s.trim()).filter(Boolean);
+      const hasEtiq = etiqCrystals || etiqOneRock || etiqBuyback;
+
+      const box = document.getElementById('preview');
+      box.innerHTML = '';
+
+      function line(html) {
+        const d = document.createElement('div');
+        d.innerHTML = html;
+        box.appendChild(d);
+      }
+      function blank() { line('&nbsp;'); }
+
+      line(hd(fleetName));
+      blank();
+
+      rules.forEach(rule => line(`${g('*')} ${esc(rule)}`));
+      blank();
+
+      if (hasEtiq) {
+        line(w(`Moon Mining Etiquette (${moonSystems})`));
+        blank();
+        if (etiqCrystals) line(`${g('*')} ${r('Type A crystals only, NO residue on glistening pulls')} (T1/ORE equipment only)`);
+        if (etiqOneRock)  line(`${g('*')} One rock/ship; try and avoid rocks already being mined`);
+        blank();
+        if (etiqBuyback) {
+          line(` ${o(`Any non-${corpTags} members mining at our moons in ${moonSystems} are required to submit ore to our Buyback Program.`)}`);
+          blank();
+          line(`${g('*')} Contract ore to ${c(buybackTo)} with no "I will receive" value`);
+          line(`${g('*')} Processing may take a few days`);
+          line(`${g('*')} Payout forwarded immediately once contract is accepted ${c('(90% reprocessed value)')}`);
+        }
+        blank();
+      }
+
+      line(w('Current Activity:'));
+      line(`${c('Homefronts:')}         ${activity(homefront)}`);
+      line(`${c('Moon Mining:')}        ${activity(moonmine)}`);
+      line(`${c('Belt Mining:')}        ${activity(beltmine)}`);
+      blank();
+      line(`${c('Orca/Porpoise:')}      ${orca ? w(orca) : r('None active')}`);
+      line(`${c('Compression Range:')}  ${rangeCompress ? w(rangeCompress + ' km') : r('—')}`);
+      line(`${c('Boost Range:')}        ${rangeMining   ? w(rangeMining   + ' km') : r('—')}`);
+      line(`${c('Shield Range:')}       ${rangeShield   ? w(rangeShield   + ' km') : r('—')}`);
+      blank();
+      line(`${g('^ SCROLL UP ^')} READ ALL MOTD ${g('^ SCROLL UP ^')}`);
+    }
+
+    function copyMotd() {
+      const text = document.getElementById('preview').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const el = document.getElementById('copy-confirm');
+        el.textContent = '✓ Copied — paste into your EVE fleet channel MOTD';
+        setTimeout(() => el.textContent = '', 3000);
+      });
+    }
+
+    function resetAll() {
+      document.getElementById('fleet-name').value   = 'Hideaway Hunters Standing Fleet';
+      document.getElementById('orca-pilot').value   = '';
+      document.getElementById('range-mining').value = '';
+      document.getElementById('range-shield').value = '';
+      document.getElementById('range-compress').value = '';
+      document.getElementById('homefront').value    = '';
+      document.getElementById('moonmine').value     = '';
+      document.getElementById('beltmine').value     = '';
+      document.getElementById('rules').value        =
+        'Please move yourself to the proper squad/wing in the Fleet Window\nHelp others when they need it, encourage them to group up\nHave fun!';
+      document.getElementById('moon-systems').value = 'Vivanier/Brellystier';
+      document.getElementById('corp-tags').value    = 'HIHUN/WHBOO';
+      document.getElementById('buyback-to').value   = 'Hideaway Holding Services';
+      ['etiq-crystals','etiq-onerock','etiq-buyback'].forEach(id => {
+        document.getElementById(id).checked = true;
+      });
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
