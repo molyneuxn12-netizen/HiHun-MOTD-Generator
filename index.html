@@ -292,6 +292,16 @@
       color: var(--gold);
     }
 
+    button.eve {
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+    button.eve:hover {
+      background: rgba(200,169,74,0.15);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
     .copy-confirm {
       font-size: 0.7rem;
       color: var(--green);
@@ -390,8 +400,12 @@ Have fun!</textarea>
         <div class="panel-title">Live Preview</div>
         <div class="preview-box" id="preview">...</div>
         <div class="btn-row">
-          <button class="primary" onclick="copyMotd()">⬡ Copy MOTD to Clipboard</button>
+          <button class="primary" onclick="copyMotd()">⬡ Copy Plain Text</button>
+          <button class="eve" onclick="copyEveMarkup()">⬡ Copy EVE Markup</button>
           <button onclick="resetAll()">↺ Reset</button>
+        </div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:6px;letter-spacing:0.05em;">
+          Use <strong style="color:var(--cyan)">Copy EVE Markup</strong> → open MOTD editor in EVE → click <strong style="color:var(--cyan)">Source</strong> → paste for full colours.
         </div>
         <div class="copy-confirm" id="copy-confirm"></div>
       </div>
@@ -497,8 +511,101 @@ Have fun!</textarea>
       const text = document.getElementById('preview').innerText;
       navigator.clipboard.writeText(text).then(() => {
         const el = document.getElementById('copy-confirm');
-        el.textContent = '✓ Copied — paste into your EVE fleet channel MOTD';
+        el.textContent = '✓ Plain text copied — paste into EVE MOTD editor';
         setTimeout(() => el.textContent = '', 3000);
+      });
+    }
+
+    // EVE Online CCPHTML colour tags (ARGB format, alpha always FF)
+    const EVE_GOLD   = 'ffc8a94a';
+    const EVE_CYAN   = 'ff4fc3f7';
+    const EVE_GREEN  = 'ff6ec97a';
+    const EVE_RED    = 'ffe07070';
+    const EVE_ORANGE = 'ffe0a050';
+    const EVE_WHITE  = 'ffffffff';
+    const EVE_YELLOW = 'ffffd966';
+
+    function eveColor(color, text) { return `<color='0x${color}'>${text}</color>`; }
+    function eveBold(text)         { return `<b>${text}</b>`; }
+    function eveB(text)  { return eveColor(EVE_GOLD,   text); }
+    function eveC(text)  { return eveColor(EVE_CYAN,   text); }
+    function eveGr(text) { return eveColor(EVE_GREEN,  text); }
+    function eveR(text)  { return eveColor(EVE_RED,    text); }
+    function eveO(text)  { return eveColor(EVE_ORANGE, text); }
+    function eveW(text)  { return eveBold(eveColor(EVE_WHITE,  text)); }
+    function eveH(text)  { return eveBold(eveColor(EVE_YELLOW, text)); }
+
+    function activityEve(text) {
+      return text ? eveGr(text) : eveR('None active');
+    }
+
+    function buildEveMarkup() {
+      const fleetName     = val('fleet-name') || 'Hideaway Hunters Standing Fleet';
+      const orca          = val('orca-pilot');
+      const rangeMining   = val('range-mining');
+      const rangeShield   = val('range-shield');
+      const rangeCompress = val('range-compress');
+      const homefront     = val('homefront');
+      const moonmine      = val('moonmine');
+      const beltmine      = val('beltmine');
+      const rulesRaw      = val('rules');
+      const moonSystems   = val('moon-systems') || 'Vivanier/Brellystier';
+      const etiqCrystals  = chk('etiq-crystals');
+      const etiqOneRock   = chk('etiq-onerock');
+      const etiqBuyback   = chk('etiq-buyback');
+      const corpTags      = val('corp-tags') || 'HIHUN/WHBOO';
+      const buybackTo     = val('buyback-to') || 'Hideaway Holding Services';
+
+      const rules = rulesRaw.split('\n').map(s => s.trim()).filter(Boolean);
+      const hasEtiq = etiqCrystals || etiqOneRock || etiqBuyback;
+
+      const lines = [];
+      const add = t => lines.push(t);
+      const gap = ()  => lines.push('');
+
+      add(eveH(fleetName));
+      gap();
+
+      rules.forEach(rule => add(`${eveB('*')} ${rule}`));
+      gap();
+
+      if (hasEtiq) {
+        add(eveW(`Moon Mining Etiquette (${moonSystems})`));
+        gap();
+        if (etiqCrystals) add(`${eveB('*')} ${eveR('Type A crystals only, NO residue on glistening pulls')} (T1/ORE equipment only)`);
+        if (etiqOneRock)  add(`${eveB('*')} One rock/ship; try and avoid rocks already being mined`);
+        gap();
+        if (etiqBuyback) {
+          add(` ${eveO(`Any non-${corpTags} members mining at our moons in ${moonSystems} are required to submit ore to our Buyback Program.`)}`);
+          gap();
+          add(`${eveB('*')} Contract ore to ${eveC(buybackTo)} with no "I will receive" value`);
+          add(`${eveB('*')} Processing may take a few days`);
+          add(`${eveB('*')} Payout forwarded immediately once contract is accepted ${eveC('(90% reprocessed value)')}`);
+        }
+        gap();
+      }
+
+      add(eveW('Current Activity:'));
+      add(`${eveC('Homefronts:')}         ${activityEve(homefront)}`);
+      add(`${eveC('Moon Mining:')}        ${activityEve(moonmine)}`);
+      add(`${eveC('Belt Mining:')}        ${activityEve(beltmine)}`);
+      gap();
+      add(`${eveC('Orca/Porpoise:')}      ${orca ? eveW(orca) : eveR('None active')}`);
+      add(`${eveC('Compression Range:')}  ${rangeCompress ? eveW(rangeCompress + ' km') : eveR('—')}`);
+      add(`${eveC('Boost Range:')}        ${rangeMining   ? eveW(rangeMining   + ' km') : eveR('—')}`);
+      add(`${eveC('Shield Range:')}       ${rangeShield   ? eveW(rangeShield   + ' km') : eveR('—')}`);
+      gap();
+      add(`${eveB('^ SCROLL UP ^')} READ ALL MOTD ${eveB('^ SCROLL UP ^')}`);
+
+      return lines.join('\n');
+    }
+
+    function copyEveMarkup() {
+      const markup = buildEveMarkup();
+      navigator.clipboard.writeText(markup).then(() => {
+        const el = document.getElementById('copy-confirm');
+        el.textContent = '✓ EVE markup copied — open MOTD editor, click Source, then paste';
+        setTimeout(() => el.textContent = '', 4000);
       });
     }
 
